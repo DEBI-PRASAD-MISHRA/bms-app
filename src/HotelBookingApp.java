@@ -70,7 +70,8 @@ public class HotelBookingApp {
             System.out.println("2. Search Room Availability");
             System.out.println("3. Make a Booking Request");
             System.out.println("4. View Booking History");
-            System.out.println("5. Exit");
+            System.out.println("5. Cancel a Booking");
+            System.out.println("6. Exit");
             System.out.print("Please select an option: ");
             
             if (!scanner.hasNextInt()) {
@@ -90,6 +91,8 @@ public class HotelBookingApp {
             } else if (choice == 4) {
                 viewBookingHistory();
             } else if (choice == 5) {
+                cancelBooking(scanner);
+            } else if (choice == 6) {
                 System.out.println("Exiting System. Goodbye!");
                 break;
             } else {
@@ -208,5 +211,34 @@ public class HotelBookingApp {
                     b.bookingId, b.guestName, b.assignedRoomNumber, b.roomType, b.checkInDate, b.checkOutDate, addOnList);
         }
         System.out.println("------------------------------");
+    }
+
+    private static void cancelBooking(Scanner scanner) {
+        System.out.print("Enter Booking ID to cancel: ");
+        String targetId = scanner.nextLine().trim();
+
+        Booking bookingToCancel = null;
+        for (Booking b : bookingHistory) {
+            if (b.bookingId.equalsIgnoreCase(targetId)) {
+                bookingToCancel = b;
+                break;
+            }
+        }
+
+        if (bookingToCancel == null) {
+            System.out.println("No booking found with ID: " + targetId);
+            return;
+        }
+
+        bookingHistory.remove(bookingToCancel);
+
+        for (Room r : roomInventory) {
+            if (r.roomNumber == bookingToCancel.assignedRoomNumber) {
+                r.isAvailable = true;
+                break;
+            }
+        }
+
+        System.out.println("Booking '" + targetId + "' has been successfully cancelled and Room " + bookingToCancel.assignedRoomNumber + " is available again.");
     }
 }
