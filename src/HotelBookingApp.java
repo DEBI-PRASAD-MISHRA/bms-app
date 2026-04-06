@@ -2,6 +2,12 @@ import java.util.*;
 import java.io.*;
 
 public class HotelBookingApp {
+    static class BookingException extends Exception {
+        BookingException(String message) {
+            super(message);
+        }
+    }
+
     static class Room {
         int roomNumber;
         String type;
@@ -124,49 +130,69 @@ public class HotelBookingApp {
     }
 
     private static void makeBookingRequest(Scanner scanner) {
-        System.out.print("Enter Guest Name: ");
-        String name = scanner.nextLine();
-        System.out.print("Enter Room Type (Single/Double/Suite): ");
-        String type = scanner.nextLine();
-        System.out.print("Enter Check-in Date (YYYY-MM-DD): ");
-        String checkIn = scanner.nextLine();
-        System.out.print("Enter Check-out Date (YYYY-MM-DD): ");
-        String checkOut = scanner.nextLine();
-
-        Room allocatedRoom = null;
-        for (Room room : roomInventory) {
-            if (room.type.equalsIgnoreCase(type) && room.isAvailable) {
-                allocatedRoom = room;
-                break;
+        try {
+            System.out.print("Enter Guest Name: ");
+            String name = scanner.nextLine().trim();
+            if (name.isEmpty()) {
+                throw new BookingException("Guest name cannot be empty.");
             }
-        }
 
-        if (allocatedRoom == null) {
-            System.out.println("Sorry, no '" + type + "' rooms are currently available.");
-            return;
-        }
+            System.out.print("Enter Room Type (Single/Double/Suite): ");
+            String type = scanner.nextLine().trim();
+            if (!type.equalsIgnoreCase("Single") && !type.equalsIgnoreCase("Double") && !type.equalsIgnoreCase("Suite")) {
+                throw new BookingException("Invalid room type selected.");
+            }
 
-        allocatedRoom.isAvailable = false;
-        String bookingId = UUID.randomUUID().toString().substring(0, 8).toUpperCase();
-        
-        Booking booking = new Booking(bookingId, name, type, checkIn, checkOut, allocatedRoom.roomNumber);
-        System.out.println("\nRoom " + allocatedRoom.roomNumber + " has been allocated!");
+            System.out.print("Enter Check-in Date (YYYY-MM-DD): ");
+            String checkIn = scanner.nextLine().trim();
+            if (!checkIn.matches("\\d{4}-\\d{2}-\\d{2}")) {
+                throw new BookingException("Invalid check-in date format. Use YYYY-MM-DD.");
+            }
 
-        System.out.print("Do you want to add Breakfast? (yes/no): ");
-        if (scanner.nextLine().equalsIgnoreCase("yes")) {
-            booking.addOns.add("Breakfast");
-        }
-        System.out.print("Do you want to add Airport Transfer? (yes/no): ");
-        if (scanner.nextLine().equalsIgnoreCase("yes")) {
-            booking.addOns.add("Airport Transfer");
-        }
-        System.out.print("Do you want to add Spa? (yes/no): ");
-        if (scanner.nextLine().equalsIgnoreCase("yes")) {
-            booking.addOns.add("Spa");
-        }
+            System.out.print("Enter Check-out Date (YYYY-MM-DD): ");
+            String checkOut = scanner.nextLine().trim();
+            if (!checkOut.matches("\\d{4}-\\d{2}-\\d{2}")) {
+                throw new BookingException("Invalid check-out date format. Use YYYY-MM-DD.");
+            }
 
-        bookingHistory.add(booking);
-        booking.printSummary();
+            Room allocatedRoom = null;
+            for (Room room : roomInventory) {
+                if (room.type.equalsIgnoreCase(type) && room.isAvailable) {
+                    allocatedRoom = room;
+                    break;
+                }
+            }
+
+            if (allocatedRoom == null) {
+                throw new BookingException("Sorry, no '" + type + "' rooms are currently available.");
+            }
+
+            allocatedRoom.isAvailable = false;
+            String bookingId = UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+            
+            Booking booking = new Booking(bookingId, name, type, checkIn, checkOut, allocatedRoom.roomNumber);
+            System.out.println("\nRoom " + allocatedRoom.roomNumber + " has been allocated!");
+
+            System.out.print("Do you want to add Breakfast? (yes/no): ");
+            if (scanner.nextLine().trim().equalsIgnoreCase("yes")) {
+                booking.addOns.add("Breakfast");
+            }
+            System.out.print("Do you want to add Airport Transfer? (yes/no): ");
+            if (scanner.nextLine().trim().equalsIgnoreCase("yes")) {
+                booking.addOns.add("Airport Transfer");
+            }
+            System.out.print("Do you want to add Spa? (yes/no): ");
+            if (scanner.nextLine().trim().equalsIgnoreCase("yes")) {
+                booking.addOns.add("Spa");
+            }
+
+            bookingHistory.add(booking);
+            booking.printSummary();
+        } catch (BookingException e) {
+            System.out.println("Booking Error: " + e.getMessage());
+        } catch (Exception e) {
+            System.out.println("An unexpected error occurred: " + e.getMessage());
+        }
     }
 
     private static void viewBookingHistory() {
