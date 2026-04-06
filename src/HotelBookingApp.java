@@ -50,6 +50,7 @@ public class HotelBookingApp {
     }
 
     static List<Room> roomInventory = new ArrayList<>();
+    static List<Booking> bookingHistory = new ArrayList<>();
 
     public static void main(String[] args) {
         initializeInventory();
@@ -62,7 +63,8 @@ public class HotelBookingApp {
             System.out.println("1. View Room Options");
             System.out.println("2. Search Room Availability");
             System.out.println("3. Make a Booking Request");
-            System.out.println("4. Exit");
+            System.out.println("4. View Booking History");
+            System.out.println("5. Exit");
             System.out.print("Please select an option: ");
             
             if (!scanner.hasNextInt()) {
@@ -80,6 +82,8 @@ public class HotelBookingApp {
             } else if (choice == 3) {
                 makeBookingRequest(scanner);
             } else if (choice == 4) {
+                viewBookingHistory();
+            } else if (choice == 5) {
                 System.out.println("Exiting System. Goodbye!");
                 break;
             } else {
@@ -161,6 +165,22 @@ public class HotelBookingApp {
             booking.addOns.add("Spa");
         }
 
+        bookingHistory.add(booking);
         booking.printSummary();
+    }
+
+    private static void viewBookingHistory() {
+        System.out.println("\n--- Booking History Report ---");
+        if (bookingHistory.isEmpty()) {
+            System.out.println("No bookings made in this session yet.");
+            return;
+        }
+
+        for (Booking b : bookingHistory) {
+            String addOnList = b.addOns.isEmpty() ? "None" : String.join(", ", b.addOns);
+            System.out.printf("ID: %s | Guest: %s | Room: %d (%s) | Dates: %s to %s | Add-ons: %s%n",
+                    b.bookingId, b.guestName, b.assignedRoomNumber, b.roomType, b.checkInDate, b.checkOutDate, addOnList);
+        }
+        System.out.println("------------------------------");
     }
 }
