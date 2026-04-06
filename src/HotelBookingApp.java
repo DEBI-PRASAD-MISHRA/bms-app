@@ -57,9 +57,11 @@ public class HotelBookingApp {
 
     static List<Room> roomInventory = new ArrayList<>();
     static List<Booking> bookingHistory = new ArrayList<>();
+    private static final String DATA_FILE = "bookings.txt";
 
     public static void main(String[] args) {
         initializeInventory();
+        loadBookings();
         Scanner scanner = new Scanner(System.in);
 
         while (true) {
@@ -207,6 +209,7 @@ public class HotelBookingApp {
         bookingHistory.add(booking);
         System.out.println("Booking Succeeded for " + name + "! Room " + allocatedRoom.roomNumber + " has been allocated!");
         booking.printSummary();
+        saveBookings();
     }
 
     private static void viewBookingHistory() {
@@ -251,6 +254,58 @@ public class HotelBookingApp {
         }
 
         System.out.println("Booking '" + targetId + "' has been successfully cancelled and Room " + bookingToCancel.assignedRoomNumber + " is available again.");
+        saveBookings();
+    }
+
+    private static void saveBookings() {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(DATA_FILE))) {
+            for (Booking b : bookingHistory) {
+                String addOnsStr = String.join(";", b.addOns);
+                writer.write(b.bookingId + "," + b.guestName + "," + b.roomType + "," + b.checkInDate + "," + b.checkOutDate + "," + b.assignedRoomNumber + "," + addOnsStr);
+                writer.newLine();
+            }
+        } catch (IOException e) {
+            System.out.println("Error saving booking data: " + e.getMessage());
+        }
+    }
+
+    private static void loadBookings() {
+        File file = new File(DATA_FILE);
+        if (!file.exists()) return;
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+            String line;
+            int count = 0;
+            while ((line = reader.readLine()) != null) {
+                String[] parts = line.split(",", 7);
+                if (parts.length >= 6) {
+                    String bookingId = parts[0];
+                    String guestName = parts[1];
+                    String roomType = parts[2];
+                    String checkInDate = parts[3];
+                    String checkOutDate = parts[4];
+                    int assignedRoomNumber = Integer.parseInt(parts[5]);
+                    
+                    Booking booking = new Booking(bookingId, guestName, roomType, checkInDate, checkOutDate, assignedRoomNumber);
+                    if (parts.length == 7 && !parts[6].isEmpty()) {
+                        booking.addOns.addAll(Arrays.asList(parts[6].split(";")));
+                    }
+                    bookingHistory.add(booking);
+                    
+                    for (Room r : roomInventory) {
+                        if (r.roomNumber == assignedRoomNumber) {
+                            r.isAvailable = false;
+                        }
+                    }
+                    count++;
+                }
+            }
+            if (count > 0) {
+                System.out.println("Loaded " + count + " bookings from file.");
+            }
+        } catch (IOException e) {
+            System.out.println("Error loading booking data: " + e.getMessage());
+        }
     }
 
     private static void simulateConcurrentBooking() {
