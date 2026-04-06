@@ -21,6 +21,7 @@ public class HotelBookingApp {
         String checkInDate;
         String checkOutDate;
         int assignedRoomNumber;
+        List<String> addOns;
 
         Booking(String bookingId, String guestName, String roomType, String checkInDate, String checkOutDate, int assignedRoomNumber) {
             this.bookingId = bookingId;
@@ -29,6 +30,7 @@ public class HotelBookingApp {
             this.checkInDate = checkInDate;
             this.checkOutDate = checkOutDate;
             this.assignedRoomNumber = assignedRoomNumber;
+            this.addOns = new ArrayList<>();
         }
 
         void printSummary() {
@@ -39,6 +41,11 @@ public class HotelBookingApp {
             System.out.println("Assigned Room No: " + assignedRoomNumber);
             System.out.println("Check-in: " + checkInDate);
             System.out.println("Check-out: " + checkOutDate);
+            if (!addOns.isEmpty()) {
+                System.out.println("Add-ons: " + String.join(", ", addOns));
+            } else {
+                System.out.println("Add-ons: None");
+            }
         }
     }
 
@@ -139,6 +146,21 @@ public class HotelBookingApp {
         String bookingId = UUID.randomUUID().toString().substring(0, 8).toUpperCase();
         
         Booking booking = new Booking(bookingId, name, type, checkIn, checkOut, allocatedRoom.roomNumber);
+        System.out.println("\nRoom " + allocatedRoom.roomNumber + " has been allocated!");
+
+        System.out.print("Do you want to add Breakfast? (yes/no): ");
+        if (scanner.nextLine().equalsIgnoreCase("yes")) {
+            booking.addOns.add("Breakfast");
+        }
+        System.out.print("Do you want to add Airport Transfer? (yes/no): ");
+        if (scanner.nextLine().equalsIgnoreCase("yes")) {
+            booking.addOns.add("Airport Transfer");
+        }
+        System.out.print("Do you want to add Spa? (yes/no): ");
+        if (scanner.nextLine().equalsIgnoreCase("yes")) {
+            booking.addOns.add("Spa");
+        }
+
         booking.printSummary();
     }
 }
