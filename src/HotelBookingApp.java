@@ -14,6 +14,28 @@ public class HotelBookingApp {
         }
     }
 
+    static class Booking {
+        String guestName;
+        String roomType;
+        String checkInDate;
+        String checkOutDate;
+
+        Booking(String guestName, String roomType, String checkInDate, String checkOutDate) {
+            this.guestName = guestName;
+            this.roomType = roomType;
+            this.checkInDate = checkInDate;
+            this.checkOutDate = checkOutDate;
+        }
+
+        void printSummary() {
+            System.out.println("\n--- Booking Summary ---");
+            System.out.println("Guest: " + guestName);
+            System.out.println("Room Type: " + roomType);
+            System.out.println("Check-in: " + checkInDate);
+            System.out.println("Check-out: " + checkOutDate);
+        }
+    }
+
     static List<Room> roomInventory = new ArrayList<>();
 
     public static void main(String[] args) {
@@ -26,7 +48,8 @@ public class HotelBookingApp {
             System.out.println("=========================================");
             System.out.println("1. View Room Options");
             System.out.println("2. Search Room Availability");
-            System.out.println("3. Exit");
+            System.out.println("3. Make a Booking Request");
+            System.out.println("4. Exit");
             System.out.print("Please select an option: ");
             
             if (!scanner.hasNextInt()) {
@@ -42,6 +65,8 @@ public class HotelBookingApp {
             } else if (choice == 2) {
                 searchRoomAvailability(scanner);
             } else if (choice == 3) {
+                makeBookingRequest(scanner);
+            } else if (choice == 4) {
                 System.out.println("Exiting System. Goodbye!");
                 break;
             } else {
@@ -79,5 +104,19 @@ public class HotelBookingApp {
         if (!found) {
             System.out.println("No available rooms of this type.");
         }
+    }
+
+    private static void makeBookingRequest(Scanner scanner) {
+        System.out.print("Enter Guest Name: ");
+        String name = scanner.nextLine();
+        System.out.print("Enter Room Type (Single/Double/Suite): ");
+        String type = scanner.nextLine();
+        System.out.print("Enter Check-in Date (YYYY-MM-DD): ");
+        String checkIn = scanner.nextLine();
+        System.out.print("Enter Check-out Date (YYYY-MM-DD): ");
+        String checkOut = scanner.nextLine();
+
+        Booking booking = new Booking(name, type, checkIn, checkOut);
+        booking.printSummary();
     }
 }
