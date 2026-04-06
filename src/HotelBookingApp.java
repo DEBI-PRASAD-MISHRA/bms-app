@@ -15,22 +15,28 @@ public class HotelBookingApp {
     }
 
     static class Booking {
+        String bookingId;
         String guestName;
         String roomType;
         String checkInDate;
         String checkOutDate;
+        int assignedRoomNumber;
 
-        Booking(String guestName, String roomType, String checkInDate, String checkOutDate) {
+        Booking(String bookingId, String guestName, String roomType, String checkInDate, String checkOutDate, int assignedRoomNumber) {
+            this.bookingId = bookingId;
             this.guestName = guestName;
             this.roomType = roomType;
             this.checkInDate = checkInDate;
             this.checkOutDate = checkOutDate;
+            this.assignedRoomNumber = assignedRoomNumber;
         }
 
         void printSummary() {
-            System.out.println("\n--- Booking Summary ---");
+            System.out.println("\n--- Reservation Confirmation ---");
+            System.out.println("Booking ID: " + bookingId);
             System.out.println("Guest: " + guestName);
             System.out.println("Room Type: " + roomType);
+            System.out.println("Assigned Room No: " + assignedRoomNumber);
             System.out.println("Check-in: " + checkInDate);
             System.out.println("Check-out: " + checkOutDate);
         }
@@ -116,7 +122,23 @@ public class HotelBookingApp {
         System.out.print("Enter Check-out Date (YYYY-MM-DD): ");
         String checkOut = scanner.nextLine();
 
-        Booking booking = new Booking(name, type, checkIn, checkOut);
+        Room allocatedRoom = null;
+        for (Room room : roomInventory) {
+            if (room.type.equalsIgnoreCase(type) && room.isAvailable) {
+                allocatedRoom = room;
+                break;
+            }
+        }
+
+        if (allocatedRoom == null) {
+            System.out.println("Sorry, no '" + type + "' rooms are currently available.");
+            return;
+        }
+
+        allocatedRoom.isAvailable = false;
+        String bookingId = UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+        
+        Booking booking = new Booking(bookingId, name, type, checkIn, checkOut, allocatedRoom.roomNumber);
         booking.printSummary();
     }
 }
