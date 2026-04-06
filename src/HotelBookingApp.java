@@ -71,7 +71,8 @@ public class HotelBookingApp {
             System.out.println("3. Make a Booking Request");
             System.out.println("4. View Booking History");
             System.out.println("5. Cancel a Booking");
-            System.out.println("6. Exit");
+            System.out.println("6. Simulate Concurrent Booking");
+            System.out.println("7. Exit");
             System.out.print("Please select an option: ");
             
             if (!scanner.hasNextInt()) {
@@ -93,6 +94,8 @@ public class HotelBookingApp {
             } else if (choice == 5) {
                 cancelBooking(scanner);
             } else if (choice == 6) {
+                simulateConcurrentBooking();
+            } else if (choice == 7) {
                 System.out.println("Exiting System. Goodbye!");
                 break;
             } else {
@@ -158,44 +161,52 @@ public class HotelBookingApp {
                 throw new BookingException("Invalid check-out date format. Use YYYY-MM-DD.");
             }
 
-            Room allocatedRoom = null;
-            for (Room room : roomInventory) {
-                if (room.type.equalsIgnoreCase(type) && room.isAvailable) {
-                    allocatedRoom = room;
-                    break;
-                }
-            }
-
-            if (allocatedRoom == null) {
-                throw new BookingException("Sorry, no '" + type + "' rooms are currently available.");
-            }
-
-            allocatedRoom.isAvailable = false;
-            String bookingId = UUID.randomUUID().toString().substring(0, 8).toUpperCase();
-            
-            Booking booking = new Booking(bookingId, name, type, checkIn, checkOut, allocatedRoom.roomNumber);
-            System.out.println("\nRoom " + allocatedRoom.roomNumber + " has been allocated!");
-
+            List<String> chosenAddOns = new ArrayList<>();
             System.out.print("Do you want to add Breakfast? (yes/no): ");
             if (scanner.nextLine().trim().equalsIgnoreCase("yes")) {
-                booking.addOns.add("Breakfast");
+                chosenAddOns.add("Breakfast");
             }
             System.out.print("Do you want to add Airport Transfer? (yes/no): ");
             if (scanner.nextLine().trim().equalsIgnoreCase("yes")) {
-                booking.addOns.add("Airport Transfer");
+                chosenAddOns.add("Airport Transfer");
             }
             System.out.print("Do you want to add Spa? (yes/no): ");
             if (scanner.nextLine().trim().equalsIgnoreCase("yes")) {
-                booking.addOns.add("Spa");
+                chosenAddOns.add("Spa");
             }
 
-            bookingHistory.add(booking);
-            booking.printSummary();
+            processBooking(name, type, checkIn, checkOut, chosenAddOns);
+
         } catch (BookingException e) {
             System.out.println("Booking Error: " + e.getMessage());
         } catch (Exception e) {
             System.out.println("An unexpected error occurred: " + e.getMessage());
         }
+    }
+
+    private static synchronized void processBooking(String name, String type, String checkIn, String checkOut, List<String> addOns) throws BookingException {
+        Room allocatedRoom = null;
+        for (Room room : roomInventory) {
+            if (room.type.equalsIgnoreCase(type) && room.isAvailable) {
+                allocatedRoom = room;
+                break;
+            }
+        }
+
+        if (allocatedRoom == null) {
+            System.out.println("Booking Failed for " + name + ": No '" + type + "' rooms are currently available.");
+            return;
+        }
+
+        allocatedRoom.isAvailable = false;
+        String bookingId = UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+        
+        Booking booking = new Booking(bookingId, name, type, checkIn, checkOut, allocatedRoom.roomNumber);
+        booking.addOns.addAll(addOns);
+        
+        bookingHistory.add(booking);
+        System.out.println("Booking Succeeded for " + name + "! Room " + allocatedRoom.roomNumber + " has been allocated!");
+        booking.printSummary();
     }
 
     private static void viewBookingHistory() {
@@ -240,5 +251,49 @@ public class HotelBookingApp {
         }
 
         System.out.println("Booking '" + targetId + "' has been successfully cancelled and Room " + bookingToCancel.assignedRoomNumber + " is available again.");
+    }
+
+    private static void simulateConcurrentBooking() {
+        System.out.println("\n--- Simulating Concurrent Booking ---");
+        // Ensure only ONE single room is available for the test
+        int singleCount = 0;
+        for (Room r : roomInventory) {
+            if (r.type.equalsIgnoreCase("Single")) {
+                if (singleCount == 0) {
+                    r.isAvailable = true;
+                } else {
+                    r.isAvailable = false;
+                }
+                singleCount++;
+            }
+        }
+
+        Thread t1 = new Thread(() -> {
+            try {
+                processBooking("Alice", "Single", "2026-05-01", "2026-05-05", new ArrayList<>());
+            } catch (BookingException e) {
+                System.out.println("Error for Alice: " + e.getMessage());
+            }
+        });
+
+        Thread t2 = new Thread(() -> {
+            try {
+                processBooking("Bob", "Single", "2026-05-01", "2026-05-05", new ArrayList<>());
+            } catch (BookingException e) {
+                System.out.println("Error for Bob: " + e.getMessage());
+            }
+        });
+
+        System.out.println("Starting threads for Alice and Bob attempting to book the ONLY 'Single' room...");
+        t1.start();
+        t2.start();
+
+        try {
+            t1.join();
+            t2.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        System.out.println("Simulation complete.\n");
     }
 }
